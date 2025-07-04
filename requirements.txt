@@ -1,0 +1,5 @@
+assemblyai
+flask
+google-generativeai
+pytube
+pyttsx3

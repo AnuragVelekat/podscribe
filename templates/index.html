@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Summarizer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet" />
+    <style>
+      audio,
+      audio:disabled {
+        background-color: #212121; /* Background color */
+        border-radius: 10px; /* Rounded corners */
+        padding: 10px; /* Add padding */
+      }
+
+      audio::-webkit-media-controls-panel {
+        background-color: #bdff7b; /* Darker color */
+      }
+
+      /* Style the volume control */
+      audio::-webkit-media-controls-volume-slider,
+      audio:disabled::-webkit-media-controls-volume-slider {
+        background-color: #bdff7b; /* Volume slider color */
+      }
+
+      /* Style the progress bar */
+      audio::-webkit-media-controls-progress-bar,
+      audio:disabled::-webkit-media-controls-progress-bar {
+        background-color: #bdff7b; /* Progress bar color */
+      }
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @-webkit-keyframes rotate {
+        from {
+          -webkit-transform: rotate(0deg);
+        }
+        to {
+          -webkit-transform: rotate(360deg);
+        }
+      }
+
+      .load {
+        width: 100px;
+        height: 100px;
+        margin: 110px auto 0;
+        border: solid 10px #bdff7b;
+        border-radius: 50%;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        -webkit-transition: all 0.5s ease-in;
+        -webkit-animation-name: rotate;
+        -webkit-animation-duration: 1s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: linear;
+
+        transition: all 0.5s ease-in;
+        animation-name: rotate;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+      }
+    </style>
+  </head>
+  <body
+    class="flex flex-col min-h-screenfont-sans antialiased"
+    style="background-color: #171717">
+    <!-- Navbar -->
+    <nav
+      class="p-4 text-white flex justify-between"
+      style="background-color: #212121">
+      <div>
+        <h1 class="text-3xl font-bold" style="color: #bdff7b">PodScribe!</h1>
+      </div>
+      <div>
+        <a href="#" class="text-white hover:underline" style="display: none"
+          >Logout</a
+        >
+      </div>
+    </nav>
+
+    <br />
+    <br />
+
+    <!-- Main -->
+    <div class="flex-grow container mx-auto mt-10 px-4 sm:px-0">
+      <div
+        class="max-w-3xl mx-auto rounded-lg p-6 shadow-md flex flex-col"
+        style="background-color: #212121; color: #bdff7b">
+        <!-- Introduction -->
+        <div class="text-center">
+          <h2 class="text-2xl font-semibold mb-4">Welcome to PodScribe!</h2>
+          <p style="color: #bdff7bd7">
+            Generate high-quality summaries of YouTube podcasts using artificial
+            intelligence. Simply enter the link to the YouTube video below and
+            let the AI create the content for you!
+          </p>
+        </div>
+
+        <br />
+
+        <!-- Youtube Section -->
+        <div>
+          <h2 class="text-xl mb-4 font-semibold">Enter Youtube Link</h2>
+          <div class="flex space-x-4">
+            <input
+              id="youtubeLink"
+              type="url"
+              placeholder="Paste Youtube Link..."
+              class="flex-grow p-2 border border-black rounded-l-md"
+              style="background-color: #6a686886; color: white" />
+            <button
+              id="summarizeButton"
+              class="font-bold px-4 py-2 rounded-r-md hover:scale-105 transition transform"
+              style="background-color: #bdff7b; color: black">
+              Summarize
+            </button>
+            <!-- <button
+              id="audioButton"
+              class="text-black font-bold px-4 py-2 rounded-r-md hover:scale-105 transition transform"
+              style="background-color: #bdff7b">
+              🗣
+            </button> -->
+          </div>
+          <div class="flex justify-center pt-12">
+            <audio
+              src="{{ url_for('static', filename='audio/output.wav') }}"
+              controls
+              id="audioPlayer"
+              style="display: none"></audio>
+          </div>
+        </div>
+
+        <!-- Loading Animation -->
+        <div id="loading-circle" class="load" style="display: none"></div>
+        <!-- Generated Summary Display Section -->
+        <section class="mt-10 flex-grow">
+          <div
+            id="summaryContent"
+            class="mt-2 space-y-4"
+            style="color: #bdff7bd7">
+            {{ summary_content }}
+          </div>
+        </section>
+      </div>
+    </div>
+    <footer class="text-center p-4 mt-6" style="color: #bdff7b">
+      Developed by <strong>SUDO</strong>
+    </footer>
+    <script>
+      document
+        .getElementById("summarizeButton")
+        .addEventListener("click", async () => {
+          const youtubeLink = document.getElementById("youtubeLink").value;
+          const summaryContent = document.getElementById("summaryContent");
+          const audioEl = document.getElementById("audioPlayer");
+
+          if (youtubeLink) {
+            audioEl.style.display = "none";
+            document.getElementById("loading-circle").style.display = "block";
+
+            summaryContent.innerHTML = ""; // Clear previous content
+
+            const endpointUrl = "/generate-summary";
+
+            try {
+              const response = await fetch(endpointUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ link: youtubeLink }),
+              });
+
+              const data = await response.json();
+
+              summaryContent.innerHTML = data.content;
+            } catch (error) {
+              console.error("Error occurred:", error);
+              alert("Something went wrong. Please try again later.");
+            }
+            document.getElementById("loading-circle").style.display = "none";
+            audioEl.style.display = "inline-flex";
+          } else {
+            alert("Please enter a YouTube link.");
+          }
+        });
+
+      /*const audioButton = document.getElementById("audioButton");
+
+      audioButton.addEventListener("click", () => {
+        console.log("Hello I'm working");
+        const message = document.getElementById("summaryContent").innerHTML;
+        synth = window.speechSynthesis;
+        var msg = new SpeechSynthesisUtterance(message);
+        console.log(synth.speaking);
+        window.speechSynthesis.speak(msg);
+        console.log(synth.speaking);
+      });*/
+    </script>
+  </body>
+</html>
